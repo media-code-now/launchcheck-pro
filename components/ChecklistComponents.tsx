@@ -6,14 +6,18 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Filter, MoreHorizontal } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Search, Filter, MoreHorizontal, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ChecklistItemWithTemplate, ChecklistInstanceWithItems } from "@/types/checklist"
+import { useNotifications } from "@/components/NotificationProvider"
 
 interface ChecklistRowProps {
   item: ChecklistItemWithTemplate
   onToggle: (id: string) => void
   onDetailsClick: (id: string) => void
+  isUpdating?: boolean
 }
 
 interface ChecklistCategoryLayoutProps {
@@ -55,17 +59,26 @@ const getStatusVariant = (status: string) => {
 const ChecklistRow: React.FC<ChecklistRowProps> = ({ 
   item, 
   onToggle, 
-  onDetailsClick 
+  onDetailsClick,
+  isUpdating = false
 }) => {
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell className="w-12">
-        <input
-          type="checkbox"
-          checked={item.status === 'DONE'}
-          onChange={() => onToggle(item.id)}
-          className="w-4 h-4 rounded border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        />
+        <div className="relative">
+          <input
+            type="checkbox"
+            checked={item.status === 'DONE'}
+            onChange={() => onToggle(item.id)}
+            disabled={isUpdating}
+            className="w-4 h-4 rounded border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+          />
+          {isUpdating && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-3 w-3 animate-spin" />
+            </div>
+          )}
+        </div>
       </TableCell>
       
       <TableCell className="min-w-0 flex-1">
@@ -128,6 +141,8 @@ const ChecklistCategoryLayout: React.FC<ChecklistCategoryLayoutProps> = ({
   const items = checklistInstance.items
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("All")
+  const [updatingItems, setUpdatingItems] = React.useState<Set<string>>(new Set())
+  const { addNotification } = useNotifications()
 
   // Use real data from checklistInstance
   const workingItems = items
@@ -149,15 +164,81 @@ const ChecklistCategoryLayout: React.FC<ChecklistCategoryLayoutProps> = ({
   const categories = ["All", ...Array.from(new Set(workingItems.map(item => item.templateItem.category)))]
 
   // Handle item toggle
-  const handleItemToggle = (itemId: string) => {
-    // This would typically make an API call to update the item status
-    console.log('Toggle item:', itemId)
+  const handleItemToggle = async (itemId: string) => {
+    // Add to updating items
+    setUpdatingItems(prev => {
+      const newSet = new Set(prev)
+      newSet.add(itemId)
+      return newSet
+    })
+    
+    try {
+      // Find the current item to determine new status
+      const currentItem = workingItems.find(item => item.id === itemId)
+      if (!currentItem) return
+      
+      // Toggle status: if DONE, set to NOT_STARTED, otherwise set to DONE
+      const newStatus = currentItem.status === 'DONE' ? 'NOT_STARTED' : 'DONE'
+      
+      // Call API to update status
+      const response = await fetch(`/api/checklist-items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Show success notification
+        addNotification({
+          type: 'success',
+          title: 'Task Updated',
+          message: data.message || `Task marked as ${newStatus.toLowerCase().replace('_', ' ')}`
+        })
+        
+        // Force refresh by triggering a re-render
+        // This is a temporary solution - ideally we'd use proper state management
+        setTimeout(() => {
+          window.location.reload()
+        }, 500) // Small delay to show notification
+      } else {
+        console.error('Failed to update task:', data.error)
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: data.error || 'Failed to update task'
+        })
+      }
+    } catch (error) {
+      console.error('Error updating task:', error)
+      addNotification({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Error updating task. Please check your connection and try again.'
+      })
+    } finally {
+      // Remove from updating items
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(itemId)
+        return newSet
+      })
+    }
   }
 
   // Handle details click
+  const [selectedItem, setSelectedItem] = React.useState<ChecklistItemWithTemplate | null>(null)
+  
   const handleDetailsClick = (itemId: string) => {
-    // This would typically open a details dialog
-    console.log('Show details for item:', itemId)
+    const item = workingItems.find(item => item.id === itemId)
+    if (item) {
+      setSelectedItem(item)
+    }
   }
 
   return (
@@ -277,6 +358,7 @@ const ChecklistCategoryLayout: React.FC<ChecklistCategoryLayoutProps> = ({
                   item={item}
                   onToggle={handleItemToggle}
                   onDetailsClick={handleDetailsClick}
+                  isUpdating={updatingItems.has(item.id)}
                 />
               ))}
             </TableBody>
@@ -312,6 +394,132 @@ const ChecklistCategoryLayout: React.FC<ChecklistCategoryLayoutProps> = ({
           )
         })}
       </div>
+
+      {/* Task Details Dialog */}
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+        {selectedItem && (
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{selectedItem.templateItem.title}</DialogTitle>
+              <DialogDescription>
+                {selectedItem.templateItem.description}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Task Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <div className="mt-1">
+                    <Badge variant={getStatusVariant(selectedItem.status)}>
+                      {selectedItem.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Priority</label>
+                  <div className="mt-1">
+                    <Badge variant={getPriorityVariant(selectedItem.templateItem.priority)}>
+                      {selectedItem.templateItem.priority}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Category</label>
+                  <div className="mt-1">
+                    <Badge variant="outline">
+                      {selectedItem.templateItem.category}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Assignee</label>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {selectedItem.assignee || 'Not assigned'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-sm font-medium">Notes</label>
+                <Textarea
+                  className="mt-1"
+                  value={selectedItem.note || ''}
+                  readOnly
+                  placeholder="No notes added"
+                  rows={3}
+                />
+              </div>
+
+              {/* Related URL */}
+              {selectedItem.relatedUrl && (
+                <div>
+                  <label className="text-sm font-medium">Related URL</label>
+                  <div className="mt-1">
+                    <a 
+                      href={selectedItem.relatedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {selectedItem.relatedUrl}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Created</label>
+                  <div className="text-sm">
+                    {new Date(selectedItem.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Last Updated</label>
+                  <div className="text-sm">
+                    {new Date(selectedItem.updatedAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedItem(null)}
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  handleItemToggle(selectedItem.id)
+                  setSelectedItem(null)
+                }}
+                disabled={updatingItems.has(selectedItem.id)}
+              >
+                {updatingItems.has(selectedItem.id) ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    Mark as {selectedItem.status === 'DONE' ? 'Not Started' : 'Done'}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   )
 }

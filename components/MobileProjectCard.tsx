@@ -1,11 +1,12 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { 
   MoreVertical, 
   Calendar, 
@@ -13,8 +14,11 @@ import {
   Globe,
   CheckCircle2,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Trash2,
+  Loader2
 } from 'lucide-react'
+import { useNotifications } from '@/components/NotificationProvider'
 
 interface Project {
   id: string
@@ -31,9 +35,13 @@ interface Project {
 
 interface MobileProjectCardProps {
   project: Project
+  onDelete?: (projectId: string) => void
 }
 
-export function MobileProjectCard({ project }: MobileProjectCardProps) {
+export function MobileProjectCard({ project, onDelete }: MobileProjectCardProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { addNotification } = useNotifications()
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'IN_PROGRESS':
@@ -68,6 +76,47 @@ export function MobileProjectCard({ project }: MobileProjectCardProps) {
       month: 'short', 
       day: 'numeric' 
     })
+  }
+
+  const handleDeleteProject = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'DELETE',
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        addNotification({
+          type: 'success',
+          title: 'Project Deleted',
+          message: `"${project.name}" has been deleted successfully.`
+        })
+        
+        // Call the onDelete callback to update the parent component
+        if (onDelete) {
+          onDelete(project.id)
+        }
+        
+        setShowDeleteDialog(false)
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Delete Failed',
+          message: data.error || 'Failed to delete project. Please try again.'
+        })
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      addNotification({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Unable to delete project. Please check your connection and try again.'
+      })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -135,7 +184,7 @@ export function MobileProjectCard({ project }: MobileProjectCardProps) {
         </div>
 
         {/* Action Area */}
-        <div className="mt-4 pt-3 border-t">
+        <div className="mt-4 pt-3 border-t space-y-2">
           <Link href={`/projects/${project.id}`}>
             <Button 
               variant="ghost" 
@@ -144,8 +193,59 @@ export function MobileProjectCard({ project }: MobileProjectCardProps) {
               View Details →
             </Button>
           </Link>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start h-10 text-sm font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDeleteDialog(true)
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Project
+          </Button>
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{project.name}"? This action cannot be undone.
+              All checklists and progress data will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Project
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

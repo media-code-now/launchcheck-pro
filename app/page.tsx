@@ -24,7 +24,8 @@ import {
   TrendingUp,
   Clock,
   Users,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react"
 
 interface Project {
@@ -148,6 +149,11 @@ export default function Home() {
     } finally {
       setIsCreating(false)
     }
+  }
+
+  const handleDeleteProject = (projectId: string) => {
+    // Remove the project from the local state immediately
+    setProjects(prev => prev.filter(p => p.id !== projectId))
   }
 
   const calculateStats = () => {
@@ -306,7 +312,7 @@ export default function Home() {
             <div className="space-y-4 lg:grid lg:gap-6 lg:grid-cols-2 xl:grid-cols-3 lg:space-y-0">
               {projects.map((project) => (
                 <div key={project.id} className="lg:hidden">
-                  <MobileProjectCard project={project} />
+                  <MobileProjectCard project={project} onDelete={handleDeleteProject} />
                 </div>
               ))}
               {/* Desktop Cards - Hidden on Mobile */}
@@ -345,9 +351,48 @@ export default function Home() {
                           : 'No due date set'
                         }
                       </div>
-                      <Link href={`/projects/${project.id}`}>
-                        <Button size="sm">Open</Button>
-                      </Link>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
+                              handleDeleteProject(project.id)
+                              fetch(`/api/projects/${project.id}`, { method: 'DELETE' })
+                                .then(res => res.json())
+                                .then(data => {
+                                  if (data.success) {
+                                    addNotification({
+                                      type: 'success',
+                                      title: 'Project Deleted',
+                                      message: `"${project.name}" has been deleted successfully.`
+                                    })
+                                  } else {
+                                    addNotification({
+                                      type: 'error',
+                                      title: 'Delete Failed',
+                                      message: data.error || 'Failed to delete project.'
+                                    })
+                                    fetchProjects() // Refresh to restore if delete failed
+                                  }
+                                })
+                                .catch(() => {
+                                  addNotification({
+                                    type: 'error',
+                                    title: 'Network Error',
+                                    message: 'Unable to delete project.'
+                                  })
+                                  fetchProjects() // Refresh to restore on error
+                                })
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Link href={`/projects/${project.id}`}>
+                          <Button size="sm">Open</Button>
+                        </Link>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
