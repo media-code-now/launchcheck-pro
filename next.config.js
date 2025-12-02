@@ -16,7 +16,10 @@ const nextConfig = {
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  }
+  },
+  // Netlify-specific configuration
+  trailingSlash: false,
+  distDir: '.next'
 }
 
 module.exports = nextConfig

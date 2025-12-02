@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push && next build",
+    "build:netlify": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",
@@ -50,6 +51,7 @@
     "typescript": "^5.2.2"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.1",
     "eslint": "^8.54.0",
     "eslint-config-next": "14.0.3",
     "tsx": "^4.6.0"

@@ -80,7 +80,9 @@ export default function Home() {
         await fetchProjects() // Refresh the projects list
         setShowCreateForm(false)
       } else {
-        alert('Error creating project: ' + data.error)
+        const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error
+        alert('Error creating project: ' + errorMsg)
+        console.error('Project creation failed:', data)
       }
     } catch (error) {
       console.error('Error creating project:', error)
