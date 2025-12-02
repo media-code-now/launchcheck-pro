@@ -1,0 +1,20 @@
+# Ignore TypeScript and JavaScript files
+**/*.ts
+**/*.tsx
+**/*.js
+**/*.jsx
+
+# Ignore configuration files
+**/*.json
+**/*.md
+
+# Ignore build outputs
+.next/**/*
+dist/**/*
+build/**/*
+node_modules/**/*
+
+# Ignore specific directories
+coverage/**/*
+.vscode/**/*
+.git/**/*

@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Note: SQLite doesn't support enums, using String with validation in application
+
+// Models
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  projects Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id         String        @id @default(cuid())
+  name       String
+  domain     String?
+  clientName String
+  status     String @default("IN_PROGRESS") // IN_PROGRESS, READY_FOR_LAUNCH, LIVE, ARCHIVED
+  launchDate DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relations
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checklistInstances  ChecklistInstance[]
+
+  // Indexes
+  @@index([userId])
+  @@index([status])
+  @@index([launchDate])
+  @@map("projects")
+}
+
+model ChecklistTemplate {
+  id          String        @id @default(cuid())
+  type        String // PRE, POST
+  name        String
+  description String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  items      ChecklistItemTemplate[]
+  instances  ChecklistInstance[]
+
+  // Indexes
+  @@index([type])
+  @@index([isActive])
+  @@map("checklist_templates")
+}
+
+model ChecklistItemTemplate {
+  id          String   @id @default(cuid())
+  category    String
+  title       String
+  description String
+  priority    String @default("MEDIUM") // HIGH, MEDIUM, LOW
+  order       Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  templateId String
+  template   ChecklistTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  instances  ChecklistItemInstance[]
+
+  // Indexes
+  @@index([templateId])
+  @@index([category])
+  @@index([priority])
+  @@index([order])
+  @@map("checklist_item_templates")
+}
+
+model ChecklistInstance {
+  id          String        @id @default(cuid())
+  type        String // PRE, POST
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  projectId  String
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId String
+  template   ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  items      ChecklistItemInstance[]
+
+  // Indexes
+  @@index([projectId])
+  @@index([templateId])
+  @@index([type])
+  @@index([completedAt])
+  @@map("checklist_instances")
+}
+
+model ChecklistItemInstance {
+  id        String              @id @default(cuid())
+  status    String @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, DONE, NOT_APPLICABLE
+  assignee  String?
+  note      String?
+  relatedUrl String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  // Relations
+  checklistId      String
+  checklist        ChecklistInstance     @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  templateItemId   String
+  templateItem     ChecklistItemTemplate @relation(fields: [templateItemId], references: [id], onDelete: Restrict)
+
+  // Indexes
+  @@index([checklistId])
+  @@index([templateItemId])
+  @@index([status])
+  @@index([assignee])
+  @@index([updatedAt])
+  @@map("checklist_item_instances")
+}

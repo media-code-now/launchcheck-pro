@@ -1,0 +1,384 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Progress } from "@/components/ui/progress"
+import { ChevronDown, Home as HomeIcon, Settings, User } from "lucide-react"
+
+export default function Home() {
+  const [progress, setProgress] = useState(0)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+    setProgress(33) // Set progress after component mounts
+  }, [])
+
+  return (
+    <main className="container mx-auto py-8 px-4 max-w-6xl">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight">shadcn/ui Components Demo</h1>
+          <p className="text-xl text-muted-foreground">
+            A comprehensive showcase of all shadcn/ui components in a Next.js App Router project
+          </p>
+        </div>
+
+        {/* Breadcrumb Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Breadcrumb Navigation</CardTitle>
+            <CardDescription>Navigate through hierarchical content</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">
+                    <HomeIcon className="h-4 w-4" />
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/components">Components</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>shadcn/ui</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </CardContent>
+        </Card>
+
+        {/* Buttons & Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Buttons & Interactive Elements</CardTitle>
+            <CardDescription>Various button styles and interactive components</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button>Default Button</Button>
+              <Button variant="destructive">Destructive</Button>
+              <Button variant="outline">Outline</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="ghost">Ghost</Button>
+              <Button variant="link">Link</Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Badge>Default</Badge>
+              <Badge variant="secondary">Secondary</Badge>
+              <Badge variant="destructive">Error</Badge>
+              <Badge variant="outline">Outline</Badge>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Options <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+{isClient && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>Open Dialog</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Edit profile</DialogTitle>
+                      <DialogDescription>
+                        Make changes to your profile here. Click save when you're done.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <label htmlFor="name" className="text-right">
+                          Name
+                        </label>
+                        <Input id="name" defaultValue="Pedro Duarte" className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <label htmlFor="username" className="text-right">
+                          Username
+                        </label>
+                        <Input id="username" defaultValue="@peduarte" className="col-span-3" />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Save changes</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+              {!isClient && (
+                <Button disabled>Loading Dialog...</Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progress Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Progress Indicator</CardTitle>
+            <CardDescription>Visual progress representation</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isClient ? (
+              <>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="w-full" />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => setProgress(Math.max(0, progress - 10))}
+                    disabled={progress <= 0}
+                  >
+                    Decrease
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => setProgress(Math.min(100, progress + 10))}
+                    disabled={progress >= 100}
+                  >
+                    Increase
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>Loading...</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full">
+                  <div className="h-2 bg-gray-400 rounded-full" style={{ width: '0%' }}></div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Form Inputs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Form Controls</CardTitle>
+            <CardDescription>Input fields and form elements</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input id="email" type="email" placeholder="Enter your email" />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Input id="password" type="password" placeholder="Enter password" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="message" className="text-sm font-medium">
+                Message
+              </label>
+              <Textarea
+                id="message"
+                placeholder="Type your message here..."
+                rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tabbed Interface</CardTitle>
+            <CardDescription>Organize content with tabs</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="account" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="account">Account</TabsTrigger>
+                <TabsTrigger value="password">Password</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="account" className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Account Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage your account details and preferences here.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <Input placeholder="Full name" />
+                  <Input placeholder="Email address" type="email" />
+                  <Button>Update Account</Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="password" className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Change Password</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Update your password to keep your account secure.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <Input placeholder="Current password" type="password" />
+                  <Input placeholder="New password" type="password" />
+                  <Input placeholder="Confirm password" type="password" />
+                  <Button>Update Password</Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="settings" className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Application Settings</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure your application preferences.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Email notifications</span>
+                    <Button variant="outline" size="sm">Toggle</Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Dark mode</span>
+                    <Button variant="outline" size="sm">Toggle</Button>
+                  </div>
+                  <Button>Save Settings</Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Table Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Table</CardTitle>
+            <CardDescription>Display structured data in a table format</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableCaption>A list of your recent invoices.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Invoice</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">INV001</TableCell>
+                  <TableCell><Badge variant="secondary">Paid</Badge></TableCell>
+                  <TableCell>Credit Card</TableCell>
+                  <TableCell className="text-right">$250.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">INV002</TableCell>
+                  <TableCell><Badge variant="outline">Pending</Badge></TableCell>
+                  <TableCell>PayPal</TableCell>
+                  <TableCell className="text-right">$150.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">INV003</TableCell>
+                  <TableCell><Badge>Paid</Badge></TableCell>
+                  <TableCell>Bank Transfer</TableCell>
+                  <TableCell className="text-right">$350.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">INV004</TableCell>
+                  <TableCell><Badge variant="destructive">Failed</Badge></TableCell>
+                  <TableCell>Credit Card</TableCell>
+                  <TableCell className="text-right">$450.00</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Scroll Area Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Scroll Area</CardTitle>
+            <CardDescription>Custom scrollable content areas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-72 w-full rounded-md border p-4">
+              <div className="space-y-4">
+                {Array.from({ length: 50 }, (_, i) => (
+                  <div key={i} className="flex items-center space-x-2">
+                    <div className="h-2 w-2 rounded-full bg-primary"></div>
+                    <span className="text-sm">
+                      This is item #{i + 1} in the scrollable area. You can scroll through all items.
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-sm text-muted-foreground">
+              <p>
+                🎉 All shadcn/ui components successfully integrated! 
+                This demo showcases: Button, Card, Tabs, Table, Badge, Dialog, Input, Textarea, 
+                Dropdown Menu, Breadcrumb, Scroll Area, and Progress components.
+              </p>
+              <p className="mt-2">
+                Built with Next.js App Router, TypeScript, and Tailwind CSS.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  )
+}

@@ -1,0 +1,38 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "customSyntax": "postcss-scss",
+  "files": [
+    "**/*.css",
+    "**/*.scss",
+    "**/*.sass"
+  ],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "variants",
+          "responsive",
+          "screen",
+          "layer"
+        ]
+      }
+    ]
+  },
+  "ignoreFiles": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.json",
+    "**/*.md",
+    "**/*.html",
+    "node_modules/**/*",
+    "dist/**/*",
+    ".next/**/*",
+    "build/**/*",
+    "coverage/**/*"
+  ]
+}
