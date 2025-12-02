@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import ProjectChecklistsPage from '@/components/ProjectChecklistsPage'
 import { ProjectWithChecklists } from '@/types/checklist'
-import AppLayout from '@/components/AppLayout'
+import { MobileAppShell } from '@/components/MobileAppShell'
 import { getProjectWithChecklists, createDefaultChecklistInstances, calculateProgress } from '@/lib/prisma'
 import { ChecklistItemWithTemplate, ChecklistInstanceWithItems } from '@/types/checklist'
 
@@ -33,7 +33,7 @@ export default async function ProjectPage({
   const postProgress = postChecklist ? calculateProgress(postChecklist.items) : 0
 
   return (
-    <AppLayout>
+    <MobileAppShell>
       <ProjectChecklistsPage 
         project={project}
         preChecklist={preChecklist}
@@ -41,7 +41,7 @@ export default async function ProjectPage({
         preProgress={preProgress}
         postProgress={postProgress}
       />
-    </AppLayout>
+    </MobileAppShell>
   )
 }
 

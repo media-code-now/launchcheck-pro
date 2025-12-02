@@ -9,6 +9,11 @@ import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { MobileAppShell } from "@/components/MobileAppShell"
+import { MobileProjectCard } from "@/components/MobileProjectCard"
+import { MobileStats } from "@/components/MobileStats"
+import { PullToRefresh } from "@/components/PullToRefresh"
+import { FloatingActionButton } from "@/components/FloatingActionButton"
 import { 
   CheckCircle2, 
   Circle, 
@@ -129,29 +134,38 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">Checklist Manager</h1>
-            <p className="text-xl text-muted-foreground">
-              Organize your projects and track progress with smart checklists
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link href="/demo">
-              <Button variant="outline">View Demo</Button>
-            </Link>
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
+    <MobileAppShell 
+      showCreateButton={true} 
+      onCreateClick={() => setShowCreateForm(true)}
+    >
+      <PullToRefresh onRefresh={fetchProjects}>
+        {/* Mobile Stats */}
+        <MobileStats stats={stats} />
+
+      <div className="px-4">
+        {/* Desktop Header - Hidden on mobile */}
+        <div className="hidden lg:block mb-8">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">Checklist Manager</h1>
+              <p className="text-xl text-muted-foreground">
+                Organize your projects and track progress with smart checklists
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link href="/demo">
+                <Button variant="outline">View Demo</Button>
+              </Link>
+              <Button onClick={() => setShowCreateForm(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Desktop Stats Overview - Hidden on Mobile */}
+        <div className="hidden lg:grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
@@ -205,22 +219,24 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Projects Grid */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Your Projects</h2>
-            <Link href="/projects">
-              <Button variant="ghost">View All</Button>
+        {/* Projects Section */}
+        <div className="space-y-4">
+          {/* Section Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold lg:text-2xl">Your Projects</h2>
+            <Link href="/projects" className="hidden lg:block">
+              <Button variant="ghost" size="sm">View All</Button>
             </Link>
           </div>
 
-{loading ? (
+          {/* Projects Content */}
+          {loading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading projects...</span>
             </div>
           ) : projects.length === 0 ? (
-            <Card className="text-center py-12">
+            <Card className="text-center py-12 mx-4 lg:mx-0">
               <CardContent>
                 <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
@@ -234,9 +250,15 @@ export default function Home() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-4 lg:grid lg:gap-6 lg:grid-cols-2 xl:grid-cols-3 lg:space-y-0">
               {projects.map((project) => (
-                <Card key={project.id} className="hover:shadow-md transition-shadow">
+                <div key={project.id} className="lg:hidden">
+                  <MobileProjectCard project={project} />
+                </div>
+              ))}
+              {/* Desktop Cards - Hidden on Mobile */}
+              {projects.map((project) => (
+                <Card key={project.id} className="hidden lg:block hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{project.name}</CardTitle>
@@ -281,8 +303,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <Card>
+        {/* Quick Actions - Desktop Only */}
+        <Card className="hidden lg:block">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
@@ -336,7 +358,11 @@ export default function Home() {
           />
         </DialogContent>
       </Dialog>
-    </main>
+      </PullToRefresh>
+      
+      {/* Floating Action Button for Mobile */}
+      <FloatingActionButton onClick={() => setShowCreateForm(true)} />
+    </MobileAppShell>
   )
 }
 
