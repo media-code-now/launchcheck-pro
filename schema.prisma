@@ -6,11 +6,17 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Note: SQLite doesn't support enums, using String with validation in application
+// Enums for PostgreSQL
+enum ProjectStatus {
+  IN_PROGRESS
+  READY_FOR_LAUNCH
+  LIVE
+  ARCHIVED
+}
 
 // Models
 model User {
@@ -31,7 +37,7 @@ model Project {
   name       String
   domain     String?
   clientName String
-  status     String @default("IN_PROGRESS") // IN_PROGRESS, READY_FOR_LAUNCH, LIVE, ARCHIVED
+  status     ProjectStatus @default(IN_PROGRESS)
   launchDate DateTime?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
