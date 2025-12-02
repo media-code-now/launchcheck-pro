@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useNotifications } from '@/components/NotificationProvider'
+import { NotificationDropdown } from '@/components/NotificationDropdown'
 
 interface MobileAppShellProps {
   children: React.ReactNode
@@ -27,6 +29,8 @@ export function MobileAppShell({
   onCreateClick 
 }: MobileAppShellProps) {
   const pathname = usePathname()
+  const { unreadCount } = useNotifications()
+  const [showNotifications, setShowNotifications] = useState(false)
   
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
@@ -55,17 +59,32 @@ export function MobileAppShell({
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative touch-target"
+                onClick={() => setShowNotifications(!showNotifications)}
               >
-                3
-              </Badge>
-            </Button>
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs animate-pulse"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+              
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <NotificationDropdown onClose={() => setShowNotifications(false)} />
+              )}
+            </div>
+            
             {showCreateButton && (
-              <Button size="sm" onClick={onCreateClick}>
+              <Button size="sm" onClick={onCreateClick} className="touch-target">
                 <Plus className="h-4 w-4" />
               </Button>
             )}

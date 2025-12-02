@@ -14,6 +14,7 @@ import { MobileProjectCard } from "@/components/MobileProjectCard"
 import { MobileStats } from "@/components/MobileStats"
 import { PullToRefresh } from "@/components/PullToRefresh"
 import { FloatingActionButton } from "@/components/FloatingActionButton"
+import { useNotifications } from "@/components/NotificationProvider"
 import { 
   CheckCircle2, 
   Circle, 
@@ -44,6 +45,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const { addNotification } = useNotifications()
 
   // Fetch real projects data
   useEffect(() => {
@@ -56,9 +58,38 @@ export default function Home() {
       const data = await response.json()
       if (data.success) {
         setProjects(data.projects)
+        
+        // Add notification for projects nearing deadline (only on initial load)
+        if (loading) {
+          const projectsDueSoon = data.projects.filter((p: Project) => {
+            if (!p.launchDate) return false
+            const due = new Date(p.launchDate)
+            const now = new Date()
+            const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            return daysUntilDue <= 3 && daysUntilDue > 0
+          })
+          
+          projectsDueSoon.forEach((project: Project) => {
+            const daysUntilDue = Math.ceil((new Date(project.launchDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+            addNotification({
+              type: 'warning',
+              title: `Project Due Soon`,
+              message: `"${project.name}" is due in ${daysUntilDue} day${daysUntilDue === 1 ? '' : 's'}.`,
+              actionUrl: `/projects/${project.id}`,
+              actionText: 'Review Tasks'
+            })
+          })
+        }
       }
     } catch (error) {
       console.error('Error fetching projects:', error)
+      if (loading) {
+        addNotification({
+          type: 'error',
+          title: 'Failed to Load Projects',
+          message: 'Unable to fetch your projects. Please refresh the page or check your connection.'
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -84,14 +115,36 @@ export default function Home() {
       if (data.success) {
         await fetchProjects() // Refresh the projects list
         setShowCreateForm(false)
+        
+        // Add success notification
+        addNotification({
+          type: 'success',
+          title: 'Project Created Successfully!',
+          message: `Your project "${formData.name}" has been created with pre-populated checklists.`,
+          actionUrl: `/projects/${data.project?.id}`,
+          actionText: 'View Project'
+        })
       } else {
         const errorMsg = data.details ? `${data.error}: ${data.details}` : data.error
-        alert('Error creating project: ' + errorMsg)
+        
+        // Add error notification
+        addNotification({
+          type: 'error',
+          title: 'Failed to Create Project',
+          message: errorMsg
+        })
+        
         console.error('Project creation failed:', data)
       }
     } catch (error) {
       console.error('Error creating project:', error)
-      alert('Error creating project')
+      
+      // Add network error notification
+      addNotification({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Unable to create project. Please check your connection and try again.'
+      })
     } finally {
       setIsCreating(false)
     }
