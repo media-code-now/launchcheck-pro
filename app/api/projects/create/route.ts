@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { ProjectStatus } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
         name,
         clientName: clientName || 'Default Client',
         domain,
-        status: 'IN_PROGRESS',
+        status: ProjectStatus.IN_PROGRESS,
         launchDate: launchDate ? new Date(launchDate) : null,
         userId: user.id
       }
@@ -74,7 +75,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating project:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create project' },
+      { 
+        success: false, 
+        error: 'Failed to create project',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
