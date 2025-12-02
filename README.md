@@ -62,7 +62,7 @@ A comprehensive Next.js application for managing project checklists and template
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
-- **Database**: Prisma ORM with SQLite (dev) / PostgreSQL (production)
+- **Database**: Prisma ORM with SQLite (dev) / Neon PostgreSQL (production)
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Theme**: next-themes for dark/light mode
@@ -124,11 +124,14 @@ NEXT_PUBLIC_APP_URL="https://your-domain.com"
    - Set environment variables in Vercel dashboard
    - Deploy automatically on push to main branch
 
-3. **Database Setup:**
+3. **Database Setup (Recommended: Neon):**
 
-   - Use a managed PostgreSQL service (Vercel Postgres, Supabase, etc.)
-   - Run migrations: `npx prisma migrate deploy`
-   - Seed data: `npx prisma db seed`
+   - Create account at [neon.tech](https://neon.tech)
+   - Create new project and copy connection string
+   - Add `DATABASE_URL` to Vercel environment variables
+   - Prisma automatically runs: `db push` and `db seed`
+   
+   Alternative options: Vercel Postgres, Supabase, PlanetScale
 
 ### Deploy to Other Platforms
 
